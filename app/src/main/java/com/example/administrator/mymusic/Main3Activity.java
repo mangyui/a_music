@@ -31,16 +31,16 @@ import java.util.HashMap;
 public class Main3Activity extends AppCompatActivity {
     private static TextView hint,current,total;//声明提示信息的文本框
     public static SeekBar seekBar;
-    private Button start1,stop,pause,begin1,end;
+ //   private Button start1,stop,pause,begin1,end;
     private ImageButton start,begin,left,right;
     private boolean isplay=false,isrun=false;
     public static ListView list;
-    public TextView music_url,music_name;
+    public TextView music_index;
     public  static TextView music_current;
+    private static ArrayList<HashMap<String, Object>> musiclist;
 
     public static String toTime(int time)
     {
-        //time /=1000;
         int minute = time / 60;
         int hour = minute /60;
         int second = time %60;
@@ -71,29 +71,38 @@ public class Main3Activity extends AppCompatActivity {
 
     private void GetData()
     {
-        ArrayList<HashMap<String, Object>> musiclist=getMusicFile(Main3Activity.this);
+        musiclist=getMusicFile(Main3Activity.this);
         if(musiclist.size()!=0)
         {
-            final HashMap<String, Object> music = musiclist.get(0);
-            music_current.setText(music.get("title").toString());
+            CurrentMusic(0);
             list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                    music_url= (TextView) view.findViewById(R.id.music_url);
-                    music_name=(TextView) view.findViewById(R.id.music_name);
-                    String musicurl = music_url.getText().toString();
 
-                    MusicService.changeMusic(musicurl);
-                    music_current.setText(music_name.getText().toString());
+                    music_index=(TextView) view.findViewById(R.id.music_index);
+                    int index=Integer.parseInt(music_index.getText().toString());
+
+                    MusicService.changeMusic(index);             //修改播放音乐
+
+                 //   CurrentMusic(index);     //修改当前播放得音乐（名）
                     start.setImageResource(R.drawable.pause);
                     isplay=true;
                 }
             });
         }
-        ListAdapter adapter = new SimpleAdapter(Main3Activity.this,musiclist, R.layout.listitem, new String[] { "id","url","pic","title","artist","size","duration"}, new int[] {R.id.music_Id,R.id.music_url,R.id.pic_id, R.id.music_name,R.id.music_singer,R.id.music_size,R.id.music_time});
+        ListAdapter adapter = new SimpleAdapter(Main3Activity.this,musiclist, R.layout.listitem, new String[] { "id","index","pic","title","artist","size","duration"}, new int[] {R.id.music_Id,R.id.music_index,R.id.pic_id, R.id.music_name,R.id.music_singer,R.id.music_size,R.id.music_time});
         list.setAdapter(adapter);
     }
 
+    public static void CurrentMusic(int i)
+    {
+        int index=i;
+        if(index<0)
+            index=musiclist.size()-1;
+        if(index>=musiclist.size())
+            index=0;
+        music_current.setText(musiclist.get(index).get("title").toString());        //修改当前播放得音乐（名）
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,22 +115,16 @@ public class Main3Activity extends AppCompatActivity {
 
 
         //获取各功能按钮
-        start=(ImageButton) findViewById(R.id.play);//播放
-        left=(ImageButton) findViewById(R.id.left);//播放
-        right=(ImageButton) findViewById(R.id.right);//播放
-      //  start=(Button)findViewById(R.id.start);//播放
-//        pause=(Button)findViewById(R.id.pause);//播放
-//        stop=(Button)findViewById(R.id.stop);//播放
-        begin=(ImageButton) findViewById(R.id.kill);//播放
-      //  begin=(Button)findViewById(R.id.begin);//播放
+        start=(ImageButton) findViewById(R.id.play);  //播放
+        left=(ImageButton) findViewById(R.id.left);   //上一首
+        right=(ImageButton) findViewById(R.id.right); //上一首
+        begin=(ImageButton) findViewById(R.id.kill);  //开启服务
 
-//        end=(Button)findViewById(R.id.end);//播放
 
         start.setEnabled(false);
-//        pause.setEnabled(false);
-//        stop.setEnabled(false);
+        left.setEnabled(false);
+        right.setEnabled(false);
 
-//        hint=(TextView)findViewById(R.id.textView);
 
 
 
@@ -153,12 +156,6 @@ public class Main3Activity extends AppCompatActivity {
 
                 startService(aa);
 
-
-
-                /* currentPosition=seekBar.getProgress();
-
-                mediaPlayer.seekTo(currentPosition);
-                current.setText(toTime(currentPosition));*/
             }
         });
 
@@ -171,10 +168,14 @@ public class Main3Activity extends AppCompatActivity {
                 if(isrun==false) {
                     aa.putExtra("action", "begin");
                     startService(aa);
-                    Toast toast =Toast.makeText(Main3Activity.this,"启动服务",Toast.LENGTH_SHORT);
+
+                    Toast toast =Toast.makeText(Main3Activity.this,"启动服务",Toast.LENGTH_SHORT);   //居中Toast
                     toast.setGravity(Gravity.CENTER, 0, 0);
                     toast.show();
+
                     start.setEnabled(true);
+                    left.setEnabled(true);
+                    right.setEnabled(true);
                     isrun=true;
                 }
                 else{
@@ -182,11 +183,14 @@ public class Main3Activity extends AppCompatActivity {
                     start.setImageResource(R.drawable.play);
                     isplay=false;
                     stopService(aa);
-                    Toast toast =Toast.makeText(Main3Activity.this,"停止服务",Toast.LENGTH_SHORT);
+
+                    Toast toast =Toast.makeText(Main3Activity.this,"停止服务",Toast.LENGTH_SHORT);    //居中Toast
                     toast.setGravity(Gravity.CENTER, 0, 0);
                     toast.show();
 
                     start.setEnabled(false);
+                    left.setEnabled(false);
+                    right.setEnabled(false);
                     isrun=false;
                 }
 
@@ -226,24 +230,24 @@ public class Main3Activity extends AppCompatActivity {
             }
         });
 
-       /* pause.setOnClickListener(new View.OnClickListener() {
+       left.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent aa = new Intent(Main3Activity.this, MusicService.class);
-                aa.putExtra("action", "pause");
+                aa.putExtra("action", "prev");
                 startService(aa);
             }
         });
 
-        stop.setOnClickListener(new View.OnClickListener() {
+        right.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent aa = new Intent(Main3Activity.this, MusicService.class);
-                aa.putExtra("action", "stop");
+                aa.putExtra("action", "next");
                 startService(aa);
             }
-        });*/
-        toBegin();  //一开始触发 启动服务
+        });
+        toBegin();        //一开始触发 启动服务(放到代码的最后)
 
     }
     private  void toBegin()
@@ -287,7 +291,7 @@ public class Main3Activity extends AppCompatActivity {
                 //歌曲文件的大小MediaStore.Audio.Media.SIZE
                 long size = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE));
 
-                if (size > 1024 * 800) {     //是否大于800K
+                if (size > 1024 * 600) {     //是否大于800K
                     if (title.equals("<unknown>") || title.equals("")) {
                         title = "未知";
                     }
@@ -298,6 +302,9 @@ public class Main3Activity extends AppCompatActivity {
                     Music music = new Music(id, title, artist,
                             url, album, duration, size);
                     HashMap<String, Object> musicbox = new HashMap<String, Object>();
+
+                    musicbox.put("index",i);
+
                     musicbox.put("id",id);
                     musicbox.put("title",title);
                     musicbox.put("artist",artist);
@@ -306,7 +313,7 @@ public class Main3Activity extends AppCompatActivity {
                     musicbox.put("duration",toTime(duration/1000));
                     musicbox.put("size",new java.text.DecimalFormat("#.00").format((size/1024.0/1024))+" MB");
 
-                    switch (i%5)
+                    switch (i%5)              // 图片自定义循环
                     {
                         case 0: musicbox.put("pic",R.drawable.tx11);break;
                         case 1: musicbox.put("pic",R.drawable.tx22);break;
@@ -323,6 +330,7 @@ public class Main3Activity extends AppCompatActivity {
         }
         return MusicFiles;
     }
+
     private Bitmap loadCover(String path) {
         MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
         mediaMetadataRetriever.setDataSource(path);

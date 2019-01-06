@@ -10,10 +10,11 @@
         android:layout_height="wrap_content"
         android:id="@+id/music_Id"
         android:visibility="gone"/>
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/music_url"
+        android:id="@+id/music_index"
         android:visibility="gone"/>
     <LinearLayout
         android:orientation="horizontal"
@@ -43,7 +44,7 @@
             android:orientation="vertical"
             android:paddingLeft="10dp"
             android:paddingTop="5dp"
-            android:paddingRight="0dp"
+            android:paddingRight="10dp"
             android:paddingBottom="5dp"
             android:layout_weight="2"
             android:gravity="center_vertical">

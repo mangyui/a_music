@@ -13,6 +13,8 @@ import android.os.Environment;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.Gravity;
+import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -21,31 +23,38 @@ import java.util.HashMap;
 public class MusicService  extends Service {
     public static MediaPlayer mediaPlayer=null;
     public static int index=0;
+    public static ArrayList<String> urllist;
     /**
      * 初始化播放器
      */
     private void initMediaplayer() {
-        mediaPlayer.reset();
         try {
-            ArrayList<String> urllist=getMusic(MusicService.this);
+            urllist=getMusic(MusicService.this);
 
             mediaPlayer.setDataSource(urllist.get(index));
-            mediaPlayer.setLooping(true);
+         //   mediaPlayer.setLooping(true);
             mediaPlayer.prepare();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static void changeMusic(String url)
+    public static void changeMusic(int i)
     {
         mediaPlayer.reset();
         try {
+            index=i;
+            if(index<0)
+                index=urllist.size()-1;
+            if(index>=urllist.size())
+                index=0;
+            String url = urllist.get(index);
             mediaPlayer.setDataSource(url);
-            mediaPlayer.setLooping(true);
+    //        mediaPlayer.setLooping(true);
             mediaPlayer.prepare();
             mediaPlayer.start();
-            Log.v("hjz","xsuccess");
+            Main3Activity.CurrentMusic(index);
+            Log.v("hjz","xsuccess "+index);
         } catch (Exception e) {
             e.printStackTrace();
             Log.v("hjz","xerror");
@@ -89,6 +98,12 @@ public class MusicService  extends Service {
         }.start();
 
         Log.v("hjz","onCreate");
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mediaPlayer) {
+                changeMusic(index+1);
+            }
+        });
     }
 
     @Override
@@ -133,6 +148,20 @@ public class MusicService  extends Service {
                 }
                 Log.v("hjz","-------------change,cc="+cc);
                 break;
+            case "prev":
+                if (mediaPlayer !=null)
+                {
+                    changeMusic(index-1);
+                }
+                Log.v("hjz","-------------prev,to="+index);
+                break;
+            case "next":
+                if (mediaPlayer !=null)
+                {
+                    changeMusic(index+1);
+                }
+                Log.v("hjz","-------------next,to="+index);
+                break;
         }
         return super.onStartCommand(intent, flags, startId);
     }
@@ -170,8 +199,13 @@ public class MusicService  extends Service {
                 //歌曲文件的路径MediaStore.Audio.Media.DATA
                 String url = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA));
 
-                MusicUrl.add(url);
-                cursor.moveToNext();
+                //歌曲文件的大小MediaStore.Audio.Media.SIZE
+                long size = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE));
+
+                if (size > 1024 * 600) {     //是否大于800K
+                    MusicUrl.add(url);
+                    cursor.moveToNext();
+                }
             }
         }
         return MusicUrl;
