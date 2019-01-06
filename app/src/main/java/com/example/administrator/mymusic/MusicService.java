@@ -4,25 +4,32 @@ package com.example.administrator.mymusic;
  * Created by Administrator on 2018/12/27.
  */
 import android.app.Service;
+import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.media.MediaPlayer;
 import android.os.Environment;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class MusicService  extends Service {
-    MediaPlayer mediaPlayer=null;
-
+    public static MediaPlayer mediaPlayer=null;
+    public static int index=0;
     /**
      * 初始化播放器
      */
     private void initMediaplayer() {
+        mediaPlayer.reset();
         try {
-            File file = new File(Environment.getExternalStorageDirectory()
-                    + "/Download", "b.mp3");
-            mediaPlayer.setDataSource(file.getPath());
+            ArrayList<String> urllist=getMusic(MusicService.this);
+
+            mediaPlayer.setDataSource(urllist.get(index));
             mediaPlayer.setLooping(true);
             mediaPlayer.prepare();
         } catch (Exception e) {
@@ -30,6 +37,20 @@ public class MusicService  extends Service {
         }
     }
 
+    public static void changeMusic(String url)
+    {
+        mediaPlayer.reset();
+        try {
+            mediaPlayer.setDataSource(url);
+            mediaPlayer.setLooping(true);
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+            Log.v("hjz","xsuccess");
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.v("hjz","xerror");
+        }
+    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -130,5 +151,29 @@ public class MusicService  extends Service {
 
         Log.v("hjz","onDestroy");
     }
-}
 
+    public ArrayList<String> getMusic(Context context) {
+        //ArrayList<Music>存放音乐
+        ArrayList<String> MusicUrl = new ArrayList<>();
+
+        //查询媒体数据库
+        ContentResolver resolver = context.getContentResolver();
+
+
+        Cursor cursor = resolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                null, null, null, MediaStore.Audio.Media.DEFAULT_SORT_ORDER);
+
+        //遍历媒体数据库
+        if (cursor.moveToFirst()) {
+            while (!cursor.isAfterLast()) {
+
+                //歌曲文件的路径MediaStore.Audio.Media.DATA
+                String url = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA));
+
+                MusicUrl.add(url);
+                cursor.moveToNext();
+            }
+        }
+        return MusicUrl;
+    }
+}
