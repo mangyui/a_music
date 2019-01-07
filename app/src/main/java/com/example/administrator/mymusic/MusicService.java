@@ -23,15 +23,16 @@ import java.util.HashMap;
 public class MusicService  extends Service {
     public static MediaPlayer mediaPlayer=null;
     public static int index=0;
-    public static ArrayList<String> urllist;
+  //  public static ArrayList<String> urllist;    //本来想直接获取音乐地址的，但加载过慢
+                                                 //主线程操作数据超过5秒都还没有完成就会提示程序未响应,这叫 anr ，故弃用
     /**
      * 初始化播放器
      */
     private void initMediaplayer() {
         try {
-            urllist=getMusic(MusicService.this);
+          //  urllist=getMusic(MusicService.this);
 
-            mediaPlayer.setDataSource(urllist.get(index));
+            mediaPlayer.setDataSource(Main3Activity.musiclist.get(index).get("url").toString());
          //   mediaPlayer.setLooping(true);
             mediaPlayer.prepare();
         } catch (Exception e) {
@@ -41,14 +42,15 @@ public class MusicService  extends Service {
 
     public static void changeMusic(int i)
     {
+        mediaPlayer.stop();
         mediaPlayer.reset();
         try {
             index=i;
             if(index<0)
-                index=urllist.size()-1;
-            if(index>=urllist.size())
+                index=Main3Activity.musiclist.size()-1;
+            if(index>=Main3Activity.musiclist.size())
                 index=0;
-            String url = urllist.get(index);
+            String url = Main3Activity.musiclist.get(index).get("url").toString();
             mediaPlayer.setDataSource(url);
     //        mediaPlayer.setLooping(true);
             mediaPlayer.prepare();
@@ -85,8 +87,13 @@ public class MusicService  extends Service {
                             mm.arg1=Math.round(mediaPlayer.getCurrentPosition()/1000);
                             mm.arg2=Math.round(mediaPlayer.getDuration()/1000);
 
-                     //       Main3Activity.mHandler.postDelayed(this, 1000);
                             Main3Activity.mHandler.sendMessage(mm);
+
+                            if(mm.arg1>0&&mm.arg1==mm.arg2)       //播放完成，下一首（==可能有误差，可改成相减<1）
+                            {
+                                MusicService.changeMusic(MusicService.index+1);
+                                Log.v("hjz","触发"+mm.arg2+" "+mm.arg2);
+                            }
                             Thread.sleep(1000);
                         }
                     }catch (InterruptedException e){
@@ -98,12 +105,14 @@ public class MusicService  extends Service {
         }.start();
 
         Log.v("hjz","onCreate");
-        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mediaPlayer) {
-                changeMusic(index+1);
-            }
-        });
+
+        //监听播放完成的，因启动服务时也会触发，弃用
+//        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+//            @Override
+//            public void onCompletion(MediaPlayer mediaPlayer) {
+//                  changeMusic(index+1);
+//            }
+//        });
     }
 
     @Override
@@ -181,7 +190,7 @@ public class MusicService  extends Service {
         Log.v("hjz","onDestroy");
     }
 
-    public ArrayList<String> getMusic(Context context) {
+    public ArrayList<String> getMusic(Context context) {    //获取音乐地址
         //ArrayList<Music>存放音乐
         ArrayList<String> MusicUrl = new ArrayList<>();
 

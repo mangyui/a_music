@@ -17,6 +17,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SeekBar;
@@ -37,7 +38,7 @@ public class Main3Activity extends AppCompatActivity {
     public static ListView list;
     public TextView music_index;
     public  static TextView music_current;
-    private static ArrayList<HashMap<String, Object>> musiclist;
+    public static ArrayList<HashMap<String, Object>> musiclist;
 
     public static String toTime(int time)
     {
@@ -82,16 +83,24 @@ public class Main3Activity extends AppCompatActivity {
                     music_index=(TextView) view.findViewById(R.id.music_index);
                     int index=Integer.parseInt(music_index.getText().toString());
 
-                    MusicService.changeMusic(index);             //修改播放音乐
+                    if(index!=MusicService.index||isplay != true) {
+                        MusicService.changeMusic(index);             //修改播放音乐
 
-                 //   CurrentMusic(index);     //修改当前播放得音乐（名）
-                    start.setImageResource(R.drawable.pause);
-                    isplay=true;
+                        //   CurrentMusic(index);     //修改当前播放得音乐（名）
+                        start.setImageResource(R.drawable.pause);
+                        isplay = true;
+                    }
                 }
             });
+            SimpleAdapter simpleAdapter = new SimpleAdapter(Main3Activity.this,musiclist, R.layout.listitem, new String[] { "id","index","pic","title","artist","size","duration"}, new int[] {R.id.music_Id,R.id.music_index,R.id.pic_id, R.id.music_name,R.id.music_singer,R.id.music_size,R.id.music_time});
+            simpleAdapter.setViewBinder(new viewbinder_musicmark());
+            list.setAdapter(simpleAdapter);
         }
-        ListAdapter adapter = new SimpleAdapter(Main3Activity.this,musiclist, R.layout.listitem, new String[] { "id","index","pic","title","artist","size","duration"}, new int[] {R.id.music_Id,R.id.music_index,R.id.pic_id, R.id.music_name,R.id.music_singer,R.id.music_size,R.id.music_time});
-        list.setAdapter(adapter);
+        else{
+            Toast toast =Toast.makeText(Main3Activity.this,"您本地没有歌曲，赶快去添加吧",Toast.LENGTH_SHORT);    //居中Toast
+            toast.setGravity(Gravity.CENTER, 0, 0);
+            toast.show();
+        }
     }
 
     public static void CurrentMusic(int i)
@@ -165,6 +174,13 @@ public class Main3Activity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent aa = new Intent(Main3Activity.this, MusicService.class);
+                if(musiclist.size()==0)
+                {
+                    Toast toast =Toast.makeText(Main3Activity.this,"您本地没有歌曲，赶快去添加吧",Toast.LENGTH_SHORT);    //居中Toast
+                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    toast.show();
+                    return;
+                }
                 if(isrun==false) {
                     aa.putExtra("action", "begin");
                     startService(aa);
@@ -236,6 +252,9 @@ public class Main3Activity extends AppCompatActivity {
                 Intent aa = new Intent(Main3Activity.this, MusicService.class);
                 aa.putExtra("action", "prev");
                 startService(aa);
+
+                start.setImageResource(R.drawable.pause);
+                isplay=true;
             }
         });
 
@@ -245,6 +264,9 @@ public class Main3Activity extends AppCompatActivity {
                 Intent aa = new Intent(Main3Activity.this, MusicService.class);
                 aa.putExtra("action", "next");
                 startService(aa);
+
+                start.setImageResource(R.drawable.pause);
+                isplay=true;
             }
         });
         toBegin();        //一开始触发 启动服务(放到代码的最后)
@@ -253,7 +275,7 @@ public class Main3Activity extends AppCompatActivity {
     private  void toBegin()
     {
         begin.performClick();
-        Log.v("hjz","触发");
+        Log.v("hjz","触发启动");
     }
     public ArrayList<HashMap<String, Object>> getMusicFile(Context context) {
         //ArrayList<Music>存放音乐
@@ -311,19 +333,24 @@ public class Main3Activity extends AppCompatActivity {
                     musicbox.put("url",url);
                     musicbox.put("album",album);
                     musicbox.put("duration",toTime(duration/1000));
-                    musicbox.put("size",new java.text.DecimalFormat("#.00").format((size/1024.0/1024))+" MB");
+                    musicbox.put("size",String.format("%.2f MB", (size/1024.0/1024)));
 
-                    switch (i%5)              // 图片自定义循环
-                    {
-                        case 0: musicbox.put("pic",R.drawable.tx11);break;
-                        case 1: musicbox.put("pic",R.drawable.tx22);break;
-                        case 2: musicbox.put("pic",R.drawable.tx33);break;
-                        case 3: musicbox.put("pic",R.drawable.tx44);break;
-                        case 4: musicbox.put("pic",R.drawable.tx55);break;
+                    Bitmap bb=loadCover(url);    //获取音乐本身自带图片，效果功能已实现
+                    if(bb!=null)
+                      musicbox.put("pic",bb);
+
+                    else {
+                        switch (i%5)              // 图片自定义循环
+                        {
+                            case 0: musicbox.put("pic",R.drawable.tx11);break;
+                            case 1: musicbox.put("pic",R.drawable.tx22);break;
+                            case 2: musicbox.put("pic",R.drawable.tx33);break;
+                            case 3: musicbox.put("pic",R.drawable.tx44);break;
+                            case 4: musicbox.put("pic",R.drawable.tx55);break;
+                        }
                     }
                     MusicFiles.add(musicbox);
-                    i++;
-
+                    i++;                //index标识，重要
                 }
                 cursor.moveToNext();
             }
@@ -331,12 +358,36 @@ public class Main3Activity extends AppCompatActivity {
         return MusicFiles;
     }
 
-    private Bitmap loadCover(String path) {
-        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-        mediaMetadataRetriever.setDataSource(path);
-        byte[] cover = mediaMetadataRetriever.getEmbeddedPicture();
-        Bitmap bitmap = BitmapFactory.decodeByteArray(cover, 0, cover.length);
-      //  image.setImageBitmap(bitmap);
+    private Bitmap loadCover(String filePath) {                 //根据MP3地址获取图片（Bitmap）
+        Bitmap bitmap = null;
+        //能够获取多媒体文件元数据的类
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        try {
+            retriever.setDataSource(filePath); //设置数据源
+            byte[] embedPic = retriever.getEmbeddedPicture(); //得到字节型数据
+            bitmap = BitmapFactory.decodeByteArray(embedPic, 0, embedPic.length); //转换为图片
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                retriever.release();
+            } catch (Exception e2) {
+                e2.printStackTrace();
+            }
+        }
         return bitmap;
+    }
+}
+
+ class viewbinder_musicmark implements SimpleAdapter.ViewBinder{             //重写ViewBinder，以listView里匹配Bitmap图片
+    @Override
+    public boolean setViewValue(View view, Object data, String textRepresentation){
+        if(view instanceof ImageView && data instanceof Bitmap){
+            ImageView imageview=(ImageView)view;
+            Bitmap bitmap=(Bitmap)data;
+            imageview.setImageBitmap(bitmap);
+            return true;
+        }
+        return false;
     }
 }
