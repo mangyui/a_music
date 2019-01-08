@@ -34,7 +34,8 @@ public class Main3Activity extends AppCompatActivity {
     public static SeekBar seekBar;
  //   private Button start1,stop,pause,begin1,end;
     private ImageButton start,begin,left,right;
-    private boolean isplay=false,isrun=false;
+    private boolean isrun=false;
+    public static boolean isplay=false;
     public static ListView list;
     public TextView music_index;
     public  static TextView music_current;

@@ -89,11 +89,11 @@ public class MusicService  extends Service {
 
                             Main3Activity.mHandler.sendMessage(mm);
 
-                            if(mm.arg1>0&&mm.arg1==mm.arg2)       //播放完成，下一首（==可能有误差，可改成相减<1）
-                            {
-                                MusicService.changeMusic(MusicService.index+1);
-                                Log.v("hjz","触发"+mm.arg2+" "+mm.arg2);
-                            }
+//                            if(mm.arg1>0&&mm.arg1==mm.arg2)       //播放完成，下一首（==可能有误差，可改成相减<1）
+//                            {
+//                                MusicService.changeMusic(MusicService.index+1);
+//                                Log.v("hjz","触发"+mm.arg2+" "+mm.arg2);
+//                            }
                             Thread.sleep(1000);
                         }
                     }catch (InterruptedException e){
@@ -106,13 +106,15 @@ public class MusicService  extends Service {
 
         Log.v("hjz","onCreate");
 
-        //监听播放完成的，因启动服务时也会触发，弃用
-//        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-//            @Override
-//            public void onCompletion(MediaPlayer mediaPlayer) {
-//                  changeMusic(index+1);
-//            }
-//        });
+       // 监听播放完成的，因启动服务时也会触发，
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mediaPlayer) {
+                if(Main3Activity.isplay==true) {
+                    changeMusic(index + 1);
+                }
+            }
+        });
     }
 
     @Override
