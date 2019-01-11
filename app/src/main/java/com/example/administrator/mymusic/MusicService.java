@@ -30,7 +30,6 @@ public class MusicService  extends Service {
      */
     private void initMediaplayer() {
         try {
-          //  urllist=getMusic(MusicService.this);
 
             mediaPlayer.setDataSource(Main3Activity.musiclist.get(index).get("url").toString());
          //   mediaPlayer.setLooping(true);
@@ -87,13 +86,16 @@ public class MusicService  extends Service {
                             mm.arg1=Math.round(mediaPlayer.getCurrentPosition()/1000);
                             mm.arg2=Math.round(mediaPlayer.getDuration()/1000);
 
-                            Main3Activity.mHandler.sendMessage(mm);
+                            if(mm.arg1<0)
+                            {
+                                mm.arg1=0;
+                            }
+                            if(mm.arg2<0)
+                            {
+                                mm.arg2=0;
+                            }
 
-//                            if(mm.arg1>0&&mm.arg1==mm.arg2)       //播放完成，下一首（==可能有误差，可改成相减<1）
-//                            {
-//                                MusicService.changeMusic(MusicService.index+1);
-//                                Log.v("hjz","触发"+mm.arg2+" "+mm.arg2);
-//                            }
+                            Main3Activity.mHandler.sendMessage(mm);
                             Thread.sleep(1000);
                         }
                     }catch (InterruptedException e){
@@ -106,7 +108,7 @@ public class MusicService  extends Service {
 
         Log.v("hjz","onCreate");
 
-       // 监听播放完成的，因启动服务时也会触发，
+       // 监听播放完成的，因启动服务时也会触发，故需判断
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mediaPlayer) {
@@ -190,35 +192,5 @@ public class MusicService  extends Service {
         }
 
         Log.v("hjz","onDestroy");
-    }
-
-    public ArrayList<String> getMusic(Context context) {    //获取音乐地址
-        //ArrayList<Music>存放音乐
-        ArrayList<String> MusicUrl = new ArrayList<>();
-
-        //查询媒体数据库
-        ContentResolver resolver = context.getContentResolver();
-
-
-        Cursor cursor = resolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                null, null, null, MediaStore.Audio.Media.DEFAULT_SORT_ORDER);
-
-        //遍历媒体数据库
-        if (cursor.moveToFirst()) {
-            while (!cursor.isAfterLast()) {
-
-                //歌曲文件的路径MediaStore.Audio.Media.DATA
-                String url = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA));
-
-                //歌曲文件的大小MediaStore.Audio.Media.SIZE
-                long size = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE));
-
-                if (size > 1024 * 600) {     //是否大于800K
-                    MusicUrl.add(url);
-                    cursor.moveToNext();
-                }
-            }
-        }
-        return MusicUrl;
     }
 }

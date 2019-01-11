@@ -81,6 +81,9 @@ public class Main3Activity extends AppCompatActivity {
                 @Override
                 public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
 
+                    if(isrun==false)    //暂停服务，点击无效
+                        return;
+
                     music_index=(TextView) view.findViewById(R.id.music_index);
                     int index=Integer.parseInt(music_index.getText().toString());
 
@@ -118,6 +121,7 @@ public class Main3Activity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main3);
+
         music_current=(TextView)findViewById(R.id.music_current);
 
         list=(ListView)super.findViewById(R.id.music_list);
@@ -186,7 +190,7 @@ public class Main3Activity extends AppCompatActivity {
                     aa.putExtra("action", "begin");
                     startService(aa);
 
-                    Toast toast =Toast.makeText(Main3Activity.this,"启动服务",Toast.LENGTH_SHORT);   //居中Toast
+                    Toast toast =Toast.makeText(Main3Activity.this,"已启动服务",Toast.LENGTH_SHORT);   //居中Toast
                     toast.setGravity(Gravity.CENTER, 0, 0);
                     toast.show();
 
