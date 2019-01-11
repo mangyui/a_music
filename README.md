@@ -3,8 +3,9 @@ MUSIC
 
 Android 音频播放app
 
-![运行截图](./show/music1.png)
-
+<div align="center">
+    <img src="./show/music1.png" width = "370" title="music"/>
+</div>
 
 
 功能说明
@@ -28,4 +29,4 @@ Android 音频播放app
 **注：点击APP打开出现闪退情况的话，一般就是没有给“存储权限” **
 
 
-下载：![enter description here](./show/MUSIC.apk "MUSIC")
+下载：[MUSIC.APK](https://dn-coding-net-production-file.codehub.cn/caf4d070-158b-11e9-809e-c7fcede8d40c.vnd.android.package-archive?attname=MUSIC.apk&e=1547206295&token=goE9CtaiT5YaIP6ZQ1nAafd_C1Z_H2gVP8AwuC-5:CJf3SwOOYpxRU8ZSr9SaKZRlsAQ=)
